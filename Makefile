@@ -6,6 +6,9 @@ TARGET ?= /kb/deployment
 
 APP_SERVICE = app_service
 
+WRAP_PYTHON_TOOL = wrap_python3
+WRAP_PYTHON_SCRIPT = bash $(TOOLS_DIR)/$(WRAP_PYTHON3_TOOL).sh
+
 SRC_PERL = $(wildcard scripts/*.pl)
 BIN_PERL = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_PERL))))
 DEPLOY_PERL = $(addprefix $(TARGET)/bin/,$(basename $(notdir $(SRC_PERL))))
@@ -13,6 +16,10 @@ DEPLOY_PERL = $(addprefix $(TARGET)/bin/,$(basename $(notdir $(SRC_PERL))))
 SRC_SERVICE_PERL = $(wildcard service-scripts/*.pl)
 BIN_SERVICE_PERL = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_SERVICE_PERL))))
 DEPLOY_SERVICE_PERL = $(addprefix $(SERVICE_DIR)/bin/,$(basename $(notdir $(SRC_SERVICE_PERL))))
+
+SRC_SERVICE_PYTHON = $(wildcard service-scripts/*.py)
+BIN_SERVICE_PYTHON = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_SERVICE_PYTHON))))
+DEPLOY_SERVICE_PYTHON = $(addprefix $(SERVICE_DIR)/bin/,$(basename $(notdir $(SRC_SERVICE_PYTHON))))
 
 CLIENT_TESTS = $(wildcard t/client-tests/*.t)
 SERVER_TESTS = $(wildcard t/server-tests/*.t)
@@ -29,30 +36,13 @@ TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --d
 
 all: bin 
 
-bin: $(BIN_PERL) $(BIN_SERVICE_PERL)
+bin: $(BIN_PERL) $(BIN_SERVICE_PERL) $(BIN_SERVICE_PYTHON)
 
 deploy: deploy-all
 deploy-all: deploy-client 
 deploy-client: deploy-libs deploy-scripts deploy-docs
 
-deploy-service: deploy-libs deploy-scripts deploy-service-scripts deploy-specs
-
-deploy-specs:
-	mkdir -p $(TARGET)/services/$(APP_SERVICE)
-	rsync -arv app_specs $(TARGET)/services/$(APP_SERVICE)/.
-
-deploy-service-scripts:
-	export KB_TOP=$(TARGET); \
-	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
-	export KB_PERL_PATH=$(TARGET)/lib ; \
-	for src in $(SRC_SERVICE_PERL) ; do \
-	        basefile=`basename $$src`; \
-	        base=`basename $$src .pl`; \
-	        echo install $$src $$base ; \
-	        cp $$src $(TARGET)/plbin ; \
-	        $(WRAP_PERL_SCRIPT) "$(TARGET)/plbin/$$basefile" $(TARGET)/bin/$$base ; \
-	done
-
+deploy-service: deploy-libs deploy-scripts deploy-local-tools deploy-specs
 
 deploy-dir:
 	if [ ! -d $(SERVICE_DIR) ] ; then mkdir $(SERVICE_DIR) ; fi
@@ -63,11 +53,26 @@ deploy-docs:
 
 clean:
 
+$(BIN_DIR)/predict_ppi: service-scripts/predict_ppi.py
+	export KB_CONDA_ENV=$$(realpath $(TOP_DIR))/runtime//cepi_ppi/conda; \
+	$(WRAP_PYTHON_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
 
 $(BIN_DIR)/%: service-scripts/%.pl $(TOP_DIR)/user-env.sh
 	$(WRAP_PERL_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
 
 $(BIN_DIR)/%: service-scripts/%.py $(TOP_DIR)/user-env.sh
 	$(WRAP_PYTHON_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
+
+deploy-local-tools:
+	if [ "$(KB_OVERRIDE_TOP)" != "" ] ; then sbase=$(KB_OVERRIDE_TOP) ; else sbase=$(TARGET); fi; \
+	export KB_TOP=$(TARGET); \
+	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
+	export KB_CONDA_ENV=$(DEPLOY_RUNTIME)/cepi_ppi/conda; \
+	for script in predict_ppi ; do \
+	    cp service-scripts/$$script.py $(TARGET)/pybin; \
+	    $(WRAP_PYTHON_SCRIPT) "$$sbase/pybin/$$script.py" $(TARGET)/bin/$$script; \
+	done
+
+
 
 include $(TOP_DIR)/tools/Makefile.common.rules

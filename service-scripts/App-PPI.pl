@@ -204,10 +204,10 @@ sub run_app
     # my @cmd = ("python3", "test_script.py");
     # my @cmd = ("python3", "/nfs/ml_lab/projects/ml_lab/cmann/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/predict_ppi.py", "config.json");
     # my @cmd = ("python3", "/nfs/ml_lab/projects/ml_lab/cmann/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/test_script.py");
-    my @cmd = ("python3", "/home/nbowers/bvbrc-dev/dev_container/dev/carla_ppi/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/predict_ppi.py", "config.json");
+    # my @cmd = ("python3", "/home/nbowers/bvbrc-dev/dev_container/dev/carla_ppi/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/predict_ppi.py", "config.json");
     
     # production command
-    #my @cmd = ("python3", "predict_ppi", "config.json");
+    my @cmd = ("predict_ppi", "config.json");
     print STDERR "Run: @cmd\n";
     my $ok = IPC::Run::run(\@cmd);
     if (!$ok)
