@@ -244,6 +244,24 @@ sub run_app
     {
      die "wrapper command failed $?: @cmd";
     }
+
+    #
+    # Summarize the run as a single self-contained HTML page. It reads only
+    # what predict_ppi just wrote plus the two staged FASTAs, both named in
+    # config.json, and drops the report into $output_dir -- save_output_files
+    # below already maps .html to the html type, so it needs no special
+    # handling there.
+    #
+    # A failed report must not fail the job: the predictions are the product
+    # and they are already on disk at this point.
+    #
+    my @report_cmd = ("ppi_report", "config.json");
+    print STDERR "Run: @report_cmd\n";
+    if (!IPC::Run::run(\@report_cmd))
+    {
+	warn "Report generation failed with $?: @report_cmd\n";
+    }
+
     # NB dev  not saving output_dir files
     save_output_files($app, $output_dir);
 }
@@ -366,7 +384,7 @@ sub preflight
     # # have no reference for this so just guessing
 
     my $pf = {
-         cpu => 2,
+         cpu => 8,
          memory => "128G",
          runtime => 3600,
 	 policy_data => { gpu_count => 1, partition => 'gpu2', constraint => 'V100|H100|H200' },

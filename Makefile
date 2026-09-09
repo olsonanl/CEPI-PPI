@@ -59,6 +59,16 @@ $(BIN_DIR)/predict_ppi: service-scripts/predict_ppi.py
 	export KB_CONDA_ENV=$(PPI_CONDA_ENV); \
 	$(WRAP_PYTHON_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
 
+#
+# ppi_report is stdlib-only, but it is wrapped against the same conda env as
+# predict_ppi rather than the runtime python: it runs inside the CEPI-PPI
+# container as part of the job, where /opt/conda-cepi-ppi is the interpreter
+# guaranteed to be present.
+#
+$(BIN_DIR)/ppi_report: service-scripts/ppi_report.py
+	export KB_CONDA_ENV=$(PPI_CONDA_ENV); \
+	$(WRAP_PYTHON_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
+
 $(BIN_DIR)/%: service-scripts/%.pl $(TOP_DIR)/user-env.sh
 	$(WRAP_PERL_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
 
@@ -70,7 +80,7 @@ deploy-local-tools:
 	export KB_TOP=$(TARGET); \
 	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
 	export KB_CONDA_ENV=$(PPI_CONDA_ENV); \
-	for script in predict_ppi ; do \
+	for script in predict_ppi ppi_report ; do \
 	    cp service-scripts/$$script.py $(TARGET)/pybin; \
 	    $(WRAP_PYTHON_SCRIPT) "$$sbase/pybin/$$script.py" $(TARGET)/bin/$$script; \
 	done
