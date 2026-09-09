@@ -364,15 +364,14 @@ sub preflight
     # }
     # # zero genome ids: default
     # # have no reference for this so just guessing
-    # my $pf = {
-    #     cpu => 1,
-    #     memory => $mem,
-    #     runtime => $runtime,
-    #     storage => 0,
-    #     is_control_task => 0
-    # };
-    # return $pf;
-    ### end FROM MSA ###
+
+    my $pf = {
+         cpu => 2,
+         memory => "128G",
+         runtime => 3600,
+	 policy_data => { gpu_count => 1, partition => 'gpu2', constraint => 'V100|H100|H200' },
+    };
+    return $pf;
 
 }
 
