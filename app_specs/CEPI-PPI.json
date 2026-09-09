@@ -1,8 +1,8 @@
 {
-    "id": "ppi",
-    "script": "App-ppi",
+    "id": "cepi-pi",
+    "script": "App-CEPI-PPI",
     "label": "Protein Protein Interface",
-    "description": "The Mann, the myth, the legend, Carla",
+    "description": "Compute protein-protein interactions",
   "default_memory": "100G",
     "parameters": [
             {
@@ -83,14 +83,6 @@
                 "default": 2,
                 "desc": "Bipartite vs tripartite protein interaction",
                 "type": "int"
-            },
-            {
-                "id": "model_path",
-                "label": "Path to backend directory with the models. Pairs with pt_model which selects the models; users should not have input here.",
-                "required": 0,
-                "default": null,
-                "desc": "",
-                "type": "folder"
             },
             {
                 "id":"pt_model",
