@@ -152,8 +152,17 @@ def process_output(outputs, batch, tokenizer):
     pos_probs = torch.sigmoid(logits[:, :, 1]) # Convert logits to probabilities
     pred_labels = (pos_probs * 10**3).round() / (10**3) # Round the logit to 3 decimal points for space
     
-    # Move the result tensor to CPU
-    batch_labels = [list(np.array(batch["labels"][i].detach().cpu())) for i in range(len(batch["input_ids"]))]
+    # Move the result tensor to CPU.
+    #
+    # .tolist() rather than list(np.array(...)): under NumPy 2 the latter calls
+    # Tensor.__array__(dtype=None, copy=False), which torch does not accept, so
+    # every batch emitted a DeprecationWarning. It also yields np.int64 scalars,
+    # and these values are appended straight into the returned frame (act1/act2
+    # below are not .tolist()'d the way lab1/lab2 are) -- so they reached the
+    # output as numpy scalars. .tolist() drops numpy from the path entirely and
+    # gives plain ints; slicing and the -100 comparison behave identically.
+    #
+    batch_labels = [batch["labels"][i].detach().cpu().tolist() for i in range(len(batch["input_ids"]))]
 
     # Get the original input sequence from the tokenized sequence in the bath
     decoded = [tokenizer.decode(b) for b in batch["input_ids"]]
@@ -242,7 +251,7 @@ def process_output_s3(outputs, batch, tokenizer):
     logits       = outputs.logits
     pos_probs    = torch.sigmoid(logits[:, :, 1]) # Convert logits to probabilities
     pred_labels  = (pos_probs * 10**3).round() / (10**3)
-    batch_labels = [list(np.array(batch["labels"][i].detach().cpu())) for i in range(len(batch["input_ids"]))]
+    batch_labels = [batch["labels"][i].detach().cpu().tolist() for i in range(len(batch["input_ids"]))]
 
     # Get the input sequences
     decoded = [tokenizer.decode(b) for b in batch["input_ids"]]
@@ -531,7 +540,18 @@ def main(config):
     lfn = os.path.join(output_dir, ts + "_class_labels.txt")
 
     # Differentiate between pseudo-tripartite - antibody heavy and light chain vs antigen (3) - and bi-partite (protein vs protein)
-    if config["seq_type"] != "3":
+    #
+    # seq_type lives under config["params"] (App-PPI.pl nests the whole params
+    # hash there); there is no top-level copy, so reading config["seq_type"]
+    # here raised KeyError on every job. Use the local read at the top of main().
+    #
+    # str() because the JSON type is caller-dependent and nothing coerces it:
+    # AppScript::preprocess_parameters only special-cases bool and enum, so an
+    # int-typed param arrives as whatever the submitter sent. Observed '2' (a
+    # string) from a real job, while the app spec's own default is the number 2
+    # -- and a bare 3 != "3" is True in Python, which would have taken the
+    # bipartite branch silently instead of crashing.
+    if str(seq_type) != "3":
         inference_results = get_inference_results(   tokenized_dset.select_columns(["input_ids", "attention_mask", "labels"]), model, data_collator, tokenizer)
     else:
         inference_results = get_inference_results_s3(tokenized_dset.select_columns(["input_ids", "attention_mask", "labels"]), model, data_collator, tokenizer)
