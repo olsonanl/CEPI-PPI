@@ -1,5 +1,5 @@
 {
-    "id": "cepi-pi",
+    "id": "CEPI-PPI",
     "script": "App-CEPI-PPI",
     "label": "Protein Protein Interface",
     "description": "Compute protein-protein interactions",
