@@ -384,7 +384,7 @@ sub preflight
     # # have no reference for this so just guessing
 
     my $pf = {
-         cpu => 2,
+         cpu => 8,
          memory => "128G",
          runtime => 3600,
 	 policy_data => { gpu_count => 1, partition => 'gpu2', constraint => 'V100|H100|H200' },
