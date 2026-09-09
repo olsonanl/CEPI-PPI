@@ -56,7 +56,7 @@ deploy-docs:
 clean:
 
 $(BIN_DIR)/predict_ppi: service-scripts/predict_ppi.py
-	export KB_CONDA_ENV=$$(realpath $(TOP_DIR))/runtime//cepi_ppi/conda; \
+	export KB_CONDA_ENV=$(PPI_CONDA_ENV); \
 	$(WRAP_PYTHON_SCRIPT) '$$KB_TOP/modules/$(CURRENT_DIR)/$<' $@
 
 $(BIN_DIR)/%: service-scripts/%.pl $(TOP_DIR)/user-env.sh
