@@ -44,7 +44,7 @@ deploy: deploy-all
 deploy-all: deploy-client 
 deploy-client: deploy-libs deploy-scripts deploy-docs
 
-deploy-service: deploy-libs deploy-scripts deploy-local-tools deploy-specs
+deploy-service: deploy-libs deploy-scripts deploy-service-scripts deploy-local-tools deploy-specs
 
 deploy-dir:
 	if [ ! -d $(SERVICE_DIR) ] ; then mkdir $(SERVICE_DIR) ; fi
@@ -69,7 +69,7 @@ deploy-local-tools:
 	if [ "$(KB_OVERRIDE_TOP)" != "" ] ; then sbase=$(KB_OVERRIDE_TOP) ; else sbase=$(TARGET); fi; \
 	export KB_TOP=$(TARGET); \
 	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
-	export KB_CONDA_ENV=$(DEPLOY_RUNTIME)/cepi_ppi/conda; \
+	export KB_CONDA_ENV=$(PPI_CONDA_ENV); \
 	for script in predict_ppi ; do \
 	    cp service-scripts/$$script.py $(TARGET)/pybin; \
 	    $(WRAP_PYTHON_SCRIPT) "$$sbase/pybin/$$script.py" $(TARGET)/bin/$$script; \
