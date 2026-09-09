@@ -206,6 +206,36 @@ sub run_app
     # my @cmd = ("python3", "/nfs/ml_lab/projects/ml_lab/cmann/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/test_script.py");
     # my @cmd = ("python3", "/home/nbowers/bvbrc-dev/dev_container/dev/carla_ppi/00_BVBRC_service_development/dev_container/modules/ppi/service-scripts/predict_ppi.py", "config.json");
     
+    #
+    # Point the HF hub cache at the ESM preload area so the tokenizer/config
+    # load in predict_ppi.py is served locally instead of fetching from
+    # huggingface.co on every job (~98s on a cold cache, and a hard dependency
+    # on the Hub being reachable).
+    #
+    # The container def exports CEPI_PPI_HF_HOME rather than HF_HOME directly:
+    # %environment is sourced for every tool in the image and esmfold already
+    # claims the global HF_HOME, so translating it here is what keeps the two
+    # from stealing each other's cache. HF_HUB_OFFLINE is only set when we have
+    # a cache to be offline against.
+    #
+    if (my $hf_home = $ENV{CEPI_PPI_HF_HOME})
+    {
+	if (-d $hf_home)
+	{
+	    $ENV{HF_HOME} = $hf_home;
+	    $ENV{HF_HUB_OFFLINE} = 1;
+	    print STDERR "Using HF cache $hf_home (offline)\n";
+	}
+	else
+	{
+	    warn "CEPI_PPI_HF_HOME=$hf_home is not a directory; falling back to the Hub\n";
+	}
+    }
+    else
+    {
+	warn "CEPI_PPI_HF_HOME is not set; model metadata will be fetched from huggingface.co\n";
+    }
+
     # production command
     my @cmd = ("predict_ppi", "config.json");
     print STDERR "Run: @cmd\n";
