@@ -1,0 +1,10 @@
+{
+    "query_fasta_file": "/olson@patricbrc.org/test/ppi/query.fasta",
+    "target_fasta_file": "/olson@patricbrc.org/test/ppi/target.fasta",
+  "seq_type": "2",
+  "t_seed": 212121,
+  "pt_model": "facebook/esm2_t6_8M_UR50D",
+  "threshold": 0.3,
+    "output_file": "ppi-5x6",
+    "output_path": "/olson@patricbrc.org/test/ppi"
+}
