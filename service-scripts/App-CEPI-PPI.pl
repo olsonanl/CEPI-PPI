@@ -245,7 +245,7 @@ sub run_app
      die "wrapper command failed $?: @cmd";
     }
     # NB dev  not saving output_dir files
-    #save_output_files($app, $top);
+    save_output_files($app, $output_dir);
 }
 
 sub preflight
@@ -378,37 +378,36 @@ sub preflight
 sub save_output_files
 {
     my($app, $output_dir) = @_;
-    my %suffix_map = (
-        align => 'txt',
-    bai => 'bai',
-        bam => 'bam',
-        csv => 'csv',
-        depth => 'txt',
-        err => 'txt',
-        fasta => "contigs",
-        html => 'html',
-        out => 'txt',
-    png => 'png',
-    svg => 'svg',
-    tbl => 'tsv',
-        tsv => 'tsv',
-        txt => 'txt',);
+    my %suffix_map = (align => 'txt',
+		      bai => 'bai',
+		      bam => 'bam',
+		      csv => 'csv',
+		      depth => 'txt',
+		      err => 'txt',
+		      fasta => "contigs",
+		      html => 'html',
+		      out => 'txt',
+		      png => 'png',
+		      svg => 'svg',
+		      tbl => 'tsv',
+		      tsv => 'tsv',
+		      txt => 'txt',);
  
     my @suffix_map = map { ("--map-suffix", "$_=$suffix_map{$_}") } keys %suffix_map;
  
     if (opendir(D, $output_dir))
     {
-    while (my $p = readdir(D))
-    {
-        next if ($p =~ /^\./);
-        my @cmd = ("p3-cp", "--recursive", @suffix_map, "$output_dir/$p", "ws:" . $app->result_folder);
-        print STDERR "saving files to workspace... @cmd\n";
-        my $ok = IPC::Run::run(\@cmd);
-        if (!$ok)
-        {
-        warn "Error $? copying output_dir with @cmd\n";
-        }
-    }
-    closedir(D);
+	while (my $p = readdir(D))
+	{
+	    next if ($p =~ /^\./);
+	    my @cmd = ("p3-cp", "--recursive", @suffix_map, "$output_dir/$p", "ws:" . $app->result_folder);
+	    print STDERR "saving files to workspace... @cmd\n";
+	    my $ok = IPC::Run::run(\@cmd);
+	    if (!$ok)
+	    {
+		warn "Error $? copying output_dir with @cmd\n";
+	    }
+	}
+	closedir(D);
     }
 }
