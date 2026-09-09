@@ -44,7 +44,7 @@ deploy: deploy-all
 deploy-all: deploy-client 
 deploy-client: deploy-libs deploy-scripts deploy-docs
 
-deploy-service: deploy-libs deploy-scripts deploy-local-tools deploy-specs
+deploy-service: deploy-libs deploy-scripts deploy-service-scripts deploy-local-tools deploy-specs
 
 deploy-dir:
 	if [ ! -d $(SERVICE_DIR) ] ; then mkdir $(SERVICE_DIR) ; fi
