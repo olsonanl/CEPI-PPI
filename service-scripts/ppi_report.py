@@ -27,6 +27,10 @@ import sys
 from collections import defaultdict
 
 BLUE = "#196E9C"
+# Ramp cap and the two inks that stay legible across it -- see ramp().
+RAMP_MAX = 0.55
+INK = "#22303a"
+INK_MUTED = "#2f4048"
 LINK = "#0d78ef"
 
 #
@@ -78,11 +82,19 @@ def name_index(seqs):
     return idx, dups
 
 
-def ramp(frac, full=0.35):
-    """White to BV-BRC blue. `full` is the fraction that saturates the ramp."""
+def ramp(frac, full=1.0):
+    """White to a capped tint of BV-BRC blue.
+
+    `full` is the fraction that saturates the ramp. The ramp deliberately
+    stops at RAMP_MAX rather than reaching BLUE: past roughly 55% of the way
+    the tint is dark enough that the cell text sitting on it drops below a
+    4.5:1 contrast ratio, and a heatmap whose strongest cells cannot be read
+    is worse than a paler one. INK / INK_MUTED are readable against every
+    color this returns.
+    """
     if frac <= 0:
         return "#f7f7f7"
-    a = min(1.0, frac / full) if full > 0 else 1.0
+    a = RAMP_MAX * (min(1.0, frac / full) if full > 0 else 1.0)
     r = 255 + (25 - 255) * a
     g = 255 + (110 - 255) * a
     b = 255 + (156 - 255) * a
@@ -180,18 +192,20 @@ td.n{text-align:right}
 .note{background:#fbf7e8;border-left:4px solid #d8b13a;padding:.75rem 1rem;
  margin:1rem 0;font-size:.92em}
 .wrap{overflow-x:auto;max-width:100%%}
-.mat td{text-align:center;border:1px solid #fff;min-width:64px;line-height:1.25}
+.mat td{text-align:center;border:1px solid #fff;min-width:64px;
+ line-height:1.25;color:%(ink)s}
+.mat td .small{color:%(inkmuted)s}
 .mat th{font-size:.82em;white-space:nowrap}
 .mat th.rh{background:#eef3f7;color:#333;text-align:right}
 .seqmap{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
  font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;background:#fafbfc;
  padding:.7rem;border:1px solid #e6eaed;border-radius:2px}
-.seqmap b{font-weight:600;border-radius:2px;padding:0 1px}
+.seqmap b{font-weight:600;border-radius:2px;padding:0 1px;color:%(ink)s}
 .bar{display:inline-block;height:9px;background:%(blue)s;vertical-align:middle;
  min-width:1px;border-radius:1px}
 details{margin:.4rem 0} summary{cursor:pointer;color:%(link)s}
 .small{font-size:.85em;color:#6d7a82}
-""" % {"blue": BLUE, "link": LINK}
+""" % {"blue": BLUE, "link": LINK, "ink": INK, "inkmuted": INK_MUTED}
 
 
 def render(pairs, queries, targets, qdups, tdups, unresolved,
@@ -355,7 +369,7 @@ def render(pairs, queries, targets, qdups, tdups, unresolved,
                     n = c["hits"].get(off + i, 0)
                     if n:
                         A('<b style="background:%s">%s</b>'
-                          % (ramp(0.35 * n / c["partners"]), E(ch)))
+                          % (ramp(n / c["partners"]), E(ch)))
                     else:
                         A(E(ch))
                 A('<span class="small"> %d</span>\n' % min(off + 60, len(seq)))
